@@ -47,6 +47,7 @@ function shuffle(array) {
 }
 
 export default function App() {
+  const [consent, setConsent] = useState(null) // null = asking, true = yes, false = no
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [rounds, setRounds] = useState([])
@@ -173,6 +174,37 @@ export default function App() {
   const correctCount = rounds.filter((r) => r.guess === (r.aiOnLeft ? 'left' : 'right')).length
   const gotAllRight = correctCount === NUM_ROUNDS
 
+  // --- CONSENT SCREEN ---
+  if (consent === null) {
+    return (
+      <main className="page narrow enter">
+        <h1>Before we begin</h1>
+        <p className="lede">
+          This is a research prototype. Your written answers and reflections will be stored anonymously to help with this university project. Do you consent to your responses being stored?
+        </p>
+        <div className="actions">
+          <button className="btn" onClick={() => setConsent(true)}>
+            Yes, I consent
+          </button>
+          <button className="btn quiet" onClick={() => setConsent(false)}>
+            No, decline
+          </button>
+        </div>
+      </main>
+    )
+  }
+
+  // --- EARLY EXIT IF DECLINED ---
+  if (consent === false) {
+    return (
+      <main className="page narrow enter">
+        <h1>Thank you</h1>
+        <p className="lede">You have declined consent. Thank you for your time.</p>
+      </main>
+    )
+  }
+
+  // --- NORMAL FLOW STARTS HERE ---
   if (loading) {
     return (
       <main className="center">

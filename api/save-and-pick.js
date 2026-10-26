@@ -1,9 +1,9 @@
-import { readPool, writePool } from './pool.js'
+import { getAnswers, addAnswer } from './store.js'
 
 const FALLBACK_ANSWER =
   "I don't have another stored answer to compare against for this question yet, so this is a placeholder response standing in for one."
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' })
     return
@@ -15,25 +15,19 @@ export default function handler(req, res) {
     return
   }
 
-  const pool = readPool()
-  const entry = pool.find((q) => q.id === questionId)
-  if (!entry) {
+  const answers = await getAnswers(questionId)
+  if (!answers) {
     res.status(404).json({ error: 'Question not found' })
     return
   }
 
-  // Pick the peer answer BEFORE adding the user's own. If the pool is
-  // empty, fall back to a fixed placeholder instead of breaking.
   const peerAnswer =
-    entry.answers.length > 0
-      ? entry.answers[Math.floor(Math.random() * entry.answers.length)]
-      : FALLBACK_ANSWER
+    answers.length > 0 ? answers[Math.floor(Math.random() * answers.length)] : FALLBACK_ANSWER
 
-  entry.answers.push(userAnswer)
   try {
-    writePool(pool)
+    await addAnswer(questionId, userAnswer)
   } catch (err) {
-    console.error('Could not persist to pool (expected in production):', err)
+    console.error('Could not store answer:', err)
   }
 
   res.status(200).json({ peerAnswer })
